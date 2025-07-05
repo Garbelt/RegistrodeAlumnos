@@ -1,81 +1,89 @@
-// Función para obtener la lista de usuarios almacenada localmente
-function getUsersList() {
-    return JSON.parse(localStorage.getItem('users')) || [];
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+import { getDatabase, ref, get, remove, child } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js";
+
+// âœ… ConfiguraciÃ³n Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyBVZaysx9d6u6P13DYINPtcinpf79Sgx4U",
+  authDomain: "juego001-469b6.firebaseapp.com",
+  projectId: "juego001-469b6",
+  storageBucket: "juego001-469b6.appspot.com",
+  messagingSenderId: "528847999661",
+  appId: "1:528847999661:web:6085a104fe64262a042c24",
+  measurementId: "G-XC212WQYHK",
+  databaseURL: "https://juego001-469b6-default-rtdb.firebaseio.com"
+};
+
+const app = initializeApp(firebaseConfig);
+const database = getDatabase(app);
+
+// âœ… FunciÃ³n para obtener usuarios desde Firebase
+async function getUsersList() {
+  const dbRef = ref(database);
+  const snapshot = await get(child(dbRef, 'usuarios'));
+  if (snapshot.exists()) {
+    const usersObj = snapshot.val();
+    return Object.values(usersObj).map(user => user.nombre);
+  } else {
+    return [];
+  }
 }
 
-// Función para mostrar la lista de usuarios en la interfaz
-function displayUsersList() {
-    var usersList = document.getElementById('usersList');
-    var users = getUsersList();
+// âœ… Mostrar usuarios en la tabla
+async function displayUsersList() {
+  const usersListElement = document.getElementById('usersList');
+  usersListElement.innerHTML = '';
 
-    // Limpiar la tabla de usuarios existente
-    usersList.innerHTML = '';
+  const users = await getUsersList();
 
-    // Agregar cada usuario a la tabla
-    users.forEach(function(user) {
-        var row = document.createElement('tr');
+  users.forEach(user => {
+    const row = document.createElement('tr');
 
-        // Crear celda para el margen izquierdo
-        var leftMarginCell = document.createElement('td');
-        leftMarginCell.textContent = ''; // Aquí puedes colocar cualquier contenido o dejarlo vacío
+    const leftCell = document.createElement('td');
+    leftCell.textContent = '';
 
-        // Crear celda para el nombre de usuario
-        var usernameCell = document.createElement('td');
-        usernameCell.textContent = user;
+    const usernameCell = document.createElement('td');
+    usernameCell.textContent = user;
 
-        // Crear botón de ver información
-        var infoButton = document.createElement('button');
-        infoButton.textContent = 'Ver Info';
-        infoButton.classList.add('action-button'); // Agregar clase CSS
-        infoButton.addEventListener('click', function() {
-            var rowUsername = row.querySelector('td:nth-child(2)').textContent;
-            window.location.href = 'reg.html?username=' + encodeURIComponent(rowUsername);
-        });
-
-        // Crear botón de eliminar
-        var deleteButton = document.createElement('button');
-        deleteButton.textContent = 'Eliminar';
-        deleteButton.classList.add('action-button'); // Agregar clase CSS
-        deleteButton.addEventListener('click', function() {
-            deleteUser(user);
-            displayUsersList(); // Actualizar la lista después de eliminar
-        });
-
-        // Crear celda para las acciones (botones de eliminar y ver info)
-        var actionsCell = document.createElement('td');
-        actionsCell.classList.add('action-buttons'); // Agregar clase CSS
-        actionsCell.appendChild(infoButton); // Agregar el botón de ver info
-        actionsCell.appendChild(deleteButton);
-
-        // Agregar celdas a la fila
-        row.appendChild(leftMarginCell);
-        row.appendChild(usernameCell);
-        row.appendChild(actionsCell);
-
-        // Agregar fila a la tabla
-        usersList.appendChild(row);
+    const infoButton = document.createElement('button');
+    infoButton.textContent = 'Ver Info';
+    infoButton.classList.add('action-button');
+    infoButton.addEventListener('click', () => {
+      window.location.href = `reg.html?username=${encodeURIComponent(user)}`;
     });
+
+    const deleteButton = document.createElement('button');
+    deleteButton.textContent = 'Eliminar';
+    deleteButton.classList.add('action-button');
+    deleteButton.addEventListener('click', () => {
+      deleteUser(user.toLowerCase());
+    });
+
+    const actionsCell = document.createElement('td');
+    actionsCell.classList.add('action-buttons');
+    actionsCell.appendChild(infoButton);
+    actionsCell.appendChild(deleteButton);
+
+    row.appendChild(leftCell);
+    row.appendChild(usernameCell);
+    row.appendChild(actionsCell);
+
+    usersListElement.appendChild(row);
+  });
 }
 
-// Función para eliminar un usuario
-function deleteUser(username) {
-    var users = getUsersList();
-    var index = users.indexOf(username);
-    if (index !== -1) {
-        users.splice(index, 1);
-        localStorage.setItem('users', JSON.stringify(users));
-    }
-}
-
-// Función para eliminar todos los usuarios
-function deleteAllUsers() {
-    localStorage.removeItem('users');
+// âœ… Eliminar usuario de Firebase
+async function deleteUser(userKey) {
+  if (confirm(`Â¿Eliminar usuario ${userKey}?`)) {
+    await remove(ref(database, 'usuarios/' + userKey));
     displayUsersList();
+  }
 }
 
-// Agregar un evento de escucha al botón de eliminar todos
-var deleteAllButton = document.getElementById('deleteAllButton');
-deleteAllButton.addEventListener('click', deleteAllUsers);
+// âœ… Eliminar todos los usuarios de localStorage (no afecta Firebase)
+document.getElementById('deleteAllButton').addEventListener('click', () => {
+  localStorage.removeItem('users');
+  displayUsersList();
+});
 
-// Mostrar la lista de usuarios al cargar la página
+// Inicializar lista
 displayUsersList();
