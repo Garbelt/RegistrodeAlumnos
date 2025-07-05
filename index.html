@@ -13,8 +13,8 @@
       <label for="nombreCompleto">Nombre y Apellido:</label>
       <input type="text" id="nombreCompleto" required><br><br>
 
-      <label for="nombreUsuario">Nombre de Usuario:</label>
-      <input type="text" id="nombreUsuario" required><br><br>
+      <label for="username">Nombre de Usuario:</label>
+      <input type="text" id="username" required><br><br>
 
       <label for="escuela">Escuela:</label>
       <input type="text" id="escuela" required><br><br>
@@ -50,18 +50,19 @@
       event.preventDefault();
 
       const nombreCompleto = document.getElementById('nombreCompleto').value.trim();
-      const nombreUsuario = document.getElementById('nombreUsuario').value.trim().toLowerCase();
+      const usernameInput = document.getElementById('username').value.trim();
       const escuela = document.getElementById('escuela').value.trim();
       const curso = document.getElementById('curso').value.trim();
       const fechaRegistro = new Date().toISOString().split('T')[0];
 
-      if (!nombreCompleto || !nombreUsuario || !escuela || !curso) {
+      if (!nombreCompleto || !usernameInput || !escuela || !curso) {
         alert("Por favor, completa todos los campos.");
         return;
       }
 
+      const username = usernameInput.toLowerCase();
       const dbRef = ref(database);
-      const snapshot = await get(child(dbRef, `usuarios/${nombreUsuario}`));
+      const snapshot = await get(child(dbRef, `usuarios/${username}`));
 
       if (snapshot.exists()) {
         alert("Ese nombre de usuario ya está registrado.");
@@ -70,22 +71,24 @@
 
       const userData = {
         nombreCompleto,
-        nombreUsuario,
+        nombreUsuario: username,
         escuela,
         curso,
         fechaRegistro
       };
 
       try {
-        await set(ref(database, `usuarios/${nombreUsuario}`), userData);
+        await set(ref(database, `usuarios/${username}`), userData);
 
         let existingUsers = JSON.parse(localStorage.getItem('users')) || [];
-        if (!existingUsers.includes(nombreUsuario)) {
-          existingUsers.push(nombreUsuario);
+        if (!existingUsers.includes(username)) {
+          existingUsers.push(username);
           localStorage.setItem('users', JSON.stringify(existingUsers));
         }
-        localStorage.setItem('username', nombreUsuario);
-        localStorage.setItem('userData', JSON.stringify(userData));
+
+        localStorage.setItem('username', username);      // ✅ Se mantiene igual
+        localStorage.setItem('ActualUs', username);      // ✅ Se mantiene igual
+        localStorage.setItem('userData', JSON.stringify(userData));  // Nuevo, si querés usarlo después
 
         alert(`✅ ¡Registro exitoso! Bienvenido, ${nombreCompleto}`);
         document.getElementById('registrationForm').reset();
@@ -97,18 +100,19 @@
     document.getElementById('registrationForm').addEventListener('submit', handleRegistration);
 
     async function handleMenuButtonClick() {
-      const nombreUsuario = document.getElementById('nombreUsuario').value.trim().toLowerCase();
+      const usernameInput = document.getElementById('username').value.trim();
+      const username = usernameInput.toLowerCase();
 
-      if (!nombreUsuario) {
+      if (!username) {
         alert("Por favor, ingresa tu nombre de usuario.");
         return;
       }
 
       const dbRef = ref(database);
-      const snapshot = await get(child(dbRef, `usuarios/${nombreUsuario}`));
+      const snapshot = await get(child(dbRef, `usuarios/${username}`));
 
       if (snapshot.exists()) {
-        localStorage.setItem('ActualUs', nombreUsuario);
+        localStorage.setItem('ActualUs', username);   // ✅ Aquí también se mantiene igual
         window.location.href = 'SRAD/srad.html';
       } else {
         alert("Este usuario no está registrado.");
@@ -119,3 +123,4 @@
   </script>
 </body>
 </html>
+
