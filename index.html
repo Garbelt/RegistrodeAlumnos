@@ -2,28 +2,94 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BIENVENIDO</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding-top: 50px;
+    }
+
+    .container {
+      max-width: 400px;
+      margin: auto;
+    }
+
+    .inline-group {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+      margin-bottom: 20px;
+    }
+
+    .inline-group select {
+      flex: 1;
+      padding: 5px;
+      font-size: 14px;
+      color: #333;
+    }
+
+    /* Color claro para los placeholders (opciones deshabilitadas) */
+    .inline-group select option[disabled] {
+      color: #999;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 5px;
+      font-size: 14px;
+    }
+
+    button {
+      padding: 8px 16px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    label {
+      display: block;
+      text-align: left;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
   <div class="container">
     <h2>BIENVENIDO</h2>
+
     <form id="registrationForm">
-      <label for="nombreCompleto">Nombre y Apellido:</label>
-      <input type="text" id="nombreCompleto" required><br><br>
+      <label for="nombreApellido">Nombre y Apellido:</label>
+      <input type="text" id="nombreApellido" required/>
+      <br><br>
 
-      <label for="username">Nombre de Usuario:</label>
-      <input type="text" id="username" required><br><br>
+      <label for="usuario">Nombre de Usuario:</label>
+      <input type="text" id="usuario" required />
+      <br><br>
 
-      <label for="escuela">Escuela:</label>
-      <input type="text" id="escuela" required><br><br>
+      <label for="tipoEscuela">Escuela</label>
+      <div class="inline-group">
+        <select id="tipoEscuela" required>
+          <option value="" disabled hidden selected>Tipo y Número</option>
+          <option value="secundaria">EESO N°239</option>
+          <option value="secundaria">EESO N°362</option>
+          <option value="secundaria">EESO N°529</option>
+          <option value="primaria">PRI N° 305</option>
+          <option value="primaria">PRI N° 291</option>
+        </select>
 
-      <label for="curso">Curso:</label>
-      <input type="text" id="curso" required><br><br>
+        <select id="curso" required>
+          <option value="" disabled hidden selected>Curso</option>
+        </select>
+      </div>
 
       <button type="submit">Registrar</button>
     </form>
+
     <br>
     <button id="menuButton">VER REGISTROS</button>
   </div>
@@ -46,76 +112,94 @@
     const app = initializeApp(firebaseConfig);
     const database = getDatabase(app);
 
+    const tipoEscuela = document.getElementById('tipoEscuela');
+    const curso = document.getElementById('curso');
+
+    const cursos = {
+      secundaria: ['1er año', '2do año', '3er año', '4to año', '5to año', '6to año'],
+      primaria: ['1er grado', '2do grado', '3er grado', '4to grado', '5to grado', '6to grado', '7mo grado']
+    };
+
+    tipoEscuela.addEventListener('change', () => {
+      const selected = tipoEscuela.value;
+      curso.innerHTML = '<option value="" disabled hidden selected>Curso</option>';
+      if (selected && cursos[selected]) {
+        cursos[selected].forEach(c => {
+          const option = document.createElement('option');
+          option.value = c;
+          option.textContent = c;
+          curso.appendChild(option);
+        });
+      }
+    });
+
     async function handleRegistration(event) {
       event.preventDefault();
 
-      const nombreCompleto = document.getElementById('nombreCompleto').value.trim();
-      const usernameInput = document.getElementById('username').value.trim();
-      const escuela = document.getElementById('escuela').value.trim();
-      const curso = document.getElementById('curso').value.trim();
-      const fechaRegistro = new Date().toISOString().split('T')[0];
+      const nombreApellido = document.getElementById('nombreApellido').value.trim();
+      const usuario = document.getElementById('usuario').value.trim();
+      const tipoEscuelaVal = tipoEscuela.value;
+      const cursoVal = curso.value;
 
-      if (!nombreCompleto || !usernameInput || !escuela || !curso) {
+      if (!nombreApellido || !usuario || !tipoEscuelaVal || !cursoVal) {
         alert("Por favor, completa todos los campos.");
         return;
       }
 
-      const username = usernameInput.toLowerCase();
-      const dbRef = ref(database);
-      const snapshot = await get(child(dbRef, `usuarios/${username}`));
-
-      if (snapshot.exists()) {
-        alert("Ese nombre de usuario ya está registrado.");
-        return;
-      }
-
-      const userData = {
-        nombreCompleto,
-        nombreUsuario: username,
-        escuela,
-        curso,
-        fechaRegistro
-      };
+      const userKey = usuario.toLowerCase();
 
       try {
-        await set(ref(database, `usuarios/${username}`), userData);
+        const dbRef = ref(database);
+        const snapshot = await get(child(dbRef, `usuarios/${userKey}`));
+
+        if (snapshot.exists()) {
+          alert("Este usuario ya está registrado.");
+          return;
+        }
+
+        await set(ref(database, `usuarios/${userKey}`), {
+          nombreApellido,
+          usuario,
+          tipoEscuela: tipoEscuelaVal,
+          curso: cursoVal
+        });
 
         let existingUsers = JSON.parse(localStorage.getItem('users')) || [];
-        if (!existingUsers.includes(username)) {
-          existingUsers.push(username);
+        if (!existingUsers.includes(usuario)) {
+          existingUsers.push(usuario);
           localStorage.setItem('users', JSON.stringify(existingUsers));
         }
 
-        localStorage.setItem('username', username);      // ✅ Se mantiene igual
-        localStorage.setItem('ActualUs', username);      // ✅ Se mantiene igual
-        localStorage.setItem('userData', JSON.stringify(userData));  // Nuevo, si querés usarlo después
+        localStorage.setItem('username', usuario);
+        alert("✅ ¡Registro exitoso! Bienvenido, " + nombreApellido + "!");
 
-        alert(`✅ ¡Registro exitoso! Bienvenido, ${nombreCompleto}`);
         document.getElementById('registrationForm').reset();
+        curso.innerHTML = '<option value="" disabled hidden selected>Curso</option>';
+
       } catch (error) {
-        alert("❌ Error al registrar: " + error.message);
+        alert("Error al registrar: " + error.message);
       }
     }
 
     document.getElementById('registrationForm').addEventListener('submit', handleRegistration);
 
     async function handleMenuButtonClick() {
-      const usernameInput = document.getElementById('username').value.trim();
-      const username = usernameInput.toLowerCase();
+      const usuario = document.getElementById('usuario').value.trim();
+      const userKey = usuario.toLowerCase();
 
-      if (!username) {
+      if (!usuario) {
         alert("Por favor, ingresa tu nombre de usuario.");
         return;
       }
 
       const dbRef = ref(database);
-      const snapshot = await get(child(dbRef, `usuarios/${username}`));
+      const snapshot = await get(child(dbRef, `usuarios/${userKey}`));
 
       if (snapshot.exists()) {
-        localStorage.setItem('ActualUs', username);   // ✅ Aquí también se mantiene igual
+        localStorage.setItem('ActualUs', usuario);
         window.location.href = 'SRAD/srad.html';
       } else {
-        alert("Este usuario no está registrado.");
+        alert("Usuario no registrado. Por favor regístrate.");
       }
     }
 
@@ -123,4 +207,3 @@
   </script>
 </body>
 </html>
-
