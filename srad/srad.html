@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SRAD - Sistema de Registro y Almacenamiento de Datos</title>
+  <link rel="stylesheet" href="styles.css">
+<style>
+  .action-buttons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    table-layout: fixed;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  thead th {
+    background-color: #004080;
+    color: white;
+    font-weight: bold;
+    font-size: 1.1em;
+    padding: 10px;
+    border-bottom: 3px solid #002050;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+  }
+
+  tbody tr:nth-child(even) {
+    background-color: #f2f2f2;
+  }
+
+  tbody tr:nth-child(odd) {
+    background-color: white;
+  }
+
+th, td {
+  padding: 12px 8px;   /* Aumenté el padding vertical */
+  border: 1px solid #ddd;
+  text-align: center;
+  font-size: 14px;      /* Asegura tamaño de texto similar a REG */
+}
+
+
+  /* Ancho específico para las columnas */
+  th:nth-child(1), td:nth-child(1) {
+    width: 5%; /* columna vacía izquierda */
+  }
+
+  th:nth-child(2), td:nth-child(2) {
+    width: 30%; /* Usuario */
+  }
+
+th:nth-child(3), td:nth-child(3) {
+  width: 200px;         /* Ancho fijo suficiente para 2 botones */
+  min-width: 180px;      /* Opcional: ancho mínimo */
+}
+
+.action-button {
+  padding: 6px 12px;     /* Botones un poco más grandes si querés */
+  min-width: 70px;       /* Para que no se achiquen demasiado */
+  margin: 0 5px;
+  font-size: 14px;
+}
+
+
+</style>
+
+</head>
+<body>
+  <div class="container">
+    <h2>SRAD - Sistema de Registro y Almacenamiento de Datos</h2>
+    <table id="usersTable">
+      <thead>
+        <tr>
+          <th></th>
+          <th>Usuario</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="usersList"></tbody>
+    </table>
+    <br>
+    <button id="deleteAllButton">Eliminar Todos</button>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-database-compat.js"></script>
+  <script src="srad.js"></script>
+</body>
+</html>

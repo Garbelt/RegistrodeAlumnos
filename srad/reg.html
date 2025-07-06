@@ -1,0 +1,243 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Juegos de Usuarios</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    .container {
+      border: 2px solid #ccc;
+      border-radius: 10px;
+      display: inline-block;
+      padding: 20px;
+      max-width: 700px;
+      overflow-x: auto;
+      margin-top: 20px;
+    }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px auto 0 auto; /* top 20px, left/right auto para centrar, bottom 0 */
+  table-layout: fixed;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  table-layout: fixed;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+thead th {
+  background-color: #004080;
+  color: white;
+  font-weight: bold;
+  font-size: 1.1em;
+  padding: 10px;
+  border-bottom: 3px solid #002050;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+tbody tr:nth-child(even) {
+  background-color: #f2f2f2; /* gris claro */
+}
+
+tbody tr:nth-child(odd) {
+  background-color: white;
+}
+
+th, td {
+  padding: 8px;
+  border: 1px solid #ddd;
+  text-align: center;
+}
+
+
+    /* Columnas con anchos específicos */
+    th:nth-child(1), td:nth-child(1) {
+      width: 50px;
+    }
+
+    th:nth-child(2), td:nth-child(2) {
+      width: 50%;
+      text-align: left;
+      padding-left: 10px;
+    }
+
+    th:nth-child(3), td:nth-child(3) {
+      width: 15ch;
+      text-align: center;
+    }
+
+    th:nth-child(4), td:nth-child(4) {
+      width: 13ch;
+      text-align: center;
+    }
+
+    .title-line1 {
+      font-size: 24px;
+      text-align: center;
+    }
+
+    .title-line2 {
+      font-size: 14px;
+      text-align: center;
+      margin-top: 5px;
+      font-weight: normal;
+      color: #555;
+    }
+
+    .button-container {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-top: 20px;
+    }
+  </style>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-database-compat.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1 class="title-line1">JUEGOS DE: <span id="username-title"></span></h1>
+    <div class="title-line2" id="user-details">Cargando información del usuario...</div>
+
+    <table id="games-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Nombre y Apellido</th>
+          <th>Juego</th>
+          <th>Puntaje</th>
+        </tr>
+      </thead>
+      <tbody id="games-history"></tbody>
+    </table>
+
+    <div class="button-container">
+      <button id="generate-excel">Generar Excel</button>
+      <button id="asrad">Volver a SRAD</button>
+    </div>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBVZaysx9d6u6P13DYINPtcinpf79Sgx4U",
+      authDomain: "juego001-469b6.firebaseapp.com",
+      databaseURL: "https://juego001-469b6-default-rtdb.firebaseio.com",
+      projectId: "juego001-469b6",
+      storageBucket: "juego001-469b6.appspot.com",
+      messagingSenderId: "528847999661",
+      appId: "1:528847999661:web:6085a104fe64262a042c24"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const username = urlParams.get('username')?.toLowerCase() || "";
+      const usernameTitle = document.getElementById("username-title");
+      const userDetails = document.getElementById("user-details");
+      const tbody = document.getElementById("games-history");
+
+      if (!username) {
+        tbody.innerHTML = "<tr><td colspan='4'>Error: No se proporcionó un nombre de usuario.</td></tr>";
+        return;
+      }
+
+      usernameTitle.textContent = username;
+
+      let nombreApellido = "";
+      let escuela = "";
+      let curso = "";
+
+      try {
+        const snapshot = await database.ref(`usuarios/${username}`).once('value');
+        const userData = snapshot.val();
+        if (userData) {
+          nombreApellido = userData.nombreApellido && userData.nombreApellido.trim() !== "" ? userData.nombreApellido : username;
+          escuela = userData.tipoEscuela || "-";
+          curso = userData.curso || "-";
+          userDetails.textContent = `${nombreApellido} — ${escuela} — ${curso}`;
+        } else {
+          nombreApellido = username;
+          userDetails.textContent = "Usuario no encontrado en Firebase.";
+        }
+      } catch (error) {
+        nombreApellido = username;
+        userDetails.textContent = "Error al obtener datos.";
+      }
+
+      let gamesHistory = [];
+      try {
+        gamesHistory = JSON.parse(localStorage.getItem("gamesHistory")) || [];
+      } catch {
+        gamesHistory = [];
+      }
+
+      // Filtramos solo por usuario
+      const userGames = gamesHistory.filter(game => game.usuario.toLowerCase() === username);
+
+      if (userGames.length > 0) {
+        userGames.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+        userGames.forEach((game, index) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${index + 1}</td>
+            <td title="${nombreApellido}">${nombreApellido}</td>
+            <td title="${game.game}">${game.game}</td>
+            <td>${game.puntaje}</td>
+          `;
+          tbody.appendChild(row);
+        });
+      } else {
+        tbody.innerHTML = "<tr><td colspan='4'>No hay registros de juegos para este usuario.</td></tr>";
+      }
+
+      document.getElementById("asrad").addEventListener("click", () => {
+        window.location.href = "./srad.html";
+      });
+
+      document.getElementById("generate-excel").addEventListener("click", () => {
+        const currentDate = new Date().toISOString().slice(0, 10);
+        const fileName = `${currentDate}_${username}.xls`;
+        const tableContent = document.getElementById('games-table').outerHTML;
+
+        const excelData = `
+          <html xmlns:o="urn:schemas-microsoft-com:office:office"
+                xmlns:x="urn:schemas-microsoft-com:office:excel"
+                xmlns="http://www.w3.org/TR/REC-html40">
+          <head><meta charset="UTF-8"></head>
+          <body>
+            <table>
+              <tr><td colspan="4"><h1 style="font-size:24px; text-align:center;">INFORME DE ${username}</h1></td></tr>
+              <tr><td colspan="4" style="text-align:center;">${userDetails.textContent}</td></tr>
+              <tr></tr>
+              ${tableContent}
+            </table>
+          </body>
+          </html>
+        `;
+
+        const blob = new Blob([excelData], { type: 'application/vnd.ms-excel' });
+        saveAs(blob, fileName);
+      });
+    });
+  </script>
+</body>
+</html>
