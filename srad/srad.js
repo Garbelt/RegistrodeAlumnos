@@ -1,4 +1,4 @@
-// Configuración Firebase
+// ConfiguraciÃ³n Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyBVZaysx9d6u6P13DYINPtcinpf79Sgx4U",
   authDomain: "juego001-469b6.firebaseapp.com",
@@ -111,3 +111,4 @@ document.getElementById('deleteAllButton').addEventListener('click', deleteAllUs
 
 // Mostrar lista al iniciar
 displayUsersList();
+
