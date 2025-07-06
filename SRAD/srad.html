@@ -4,13 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SRAD - Sistema de Registro y Almacenamiento de Datos</title>
-  <link rel="stylesheet" href="../styles.css">
+  <link rel="stylesheet" href="styles.css">
   <style>
     .action-buttons {
       display: flex;
       justify-content: center;
       align-items: center;
     }
+
     .action-button {
       margin: 0 5px;
     }
@@ -30,10 +31,12 @@
       <tbody id="usersList"></tbody>
     </table>
     <br>
-    <button id="deleteAllButton">Eliminar Todos (solo local)</button>
+    <button id="deleteAllButton">Eliminar Todos</button>
   </div>
 
-  <script type="module" src="srad.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-database-compat.js"></script>
+  <script src="srad.js"></script>
 </body>
 </html>
 
