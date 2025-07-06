@@ -24,48 +24,37 @@
       margin-top: 20px;
     }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 20px auto 0 auto; /* top 20px, left/right auto para centrar, bottom 0 */
-  table-layout: fixed;
-}
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px auto 0 auto;
+      table-layout: fixed;
+    }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 20px;
-  table-layout: fixed;
-  margin-left: auto;
-  margin-right: auto;
-}
+    thead th {
+      background-color: #004080;
+      color: white;
+      font-weight: bold;
+      font-size: 1.1em;
+      padding: 10px;
+      border-bottom: 3px solid #002050;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    }
 
-thead th {
-  background-color: #004080;
-  color: white;
-  font-weight: bold;
-  font-size: 1.1em;
-  padding: 10px;
-  border-bottom: 3px solid #002050;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-}
+    tbody tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
 
-tbody tr:nth-child(even) {
-  background-color: #f2f2f2; /* gris claro */
-}
+    tbody tr:nth-child(odd) {
+      background-color: white;
+    }
 
-tbody tr:nth-child(odd) {
-  background-color: white;
-}
+    th, td {
+      padding: 8px;
+      border: 1px solid #ddd;
+      text-align: center;
+    }
 
-th, td {
-  padding: 8px;
-  border: 1px solid #ddd;
-  text-align: center;
-}
-
-
-    /* Columnas con anchos específicos */
     th:nth-child(1), td:nth-child(1) {
       width: 50px;
     }
@@ -148,17 +137,19 @@ th, td {
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
 
+    const asradButton = document.getElementById("asrad");
+    asradButton.addEventListener("click", () => {
+      window.location.href = "./srad.html";
+    });
+
+    const excelButton = document.getElementById("generate-excel");
+
     document.addEventListener("DOMContentLoaded", async () => {
       const urlParams = new URLSearchParams(window.location.search);
-      const username = urlParams.get('username')?.toLowerCase() || "";
+      const username = (urlParams.get('username') || "").toLowerCase();
       const usernameTitle = document.getElementById("username-title");
       const userDetails = document.getElementById("user-details");
       const tbody = document.getElementById("games-history");
-
-      if (!username) {
-        tbody.innerHTML = "<tr><td colspan='4'>Error: No se proporcionó un nombre de usuario.</td></tr>";
-        return;
-      }
 
       usernameTitle.textContent = username;
 
@@ -170,7 +161,7 @@ th, td {
         const snapshot = await database.ref(`usuarios/${username}`).once('value');
         const userData = snapshot.val();
         if (userData) {
-          nombreApellido = userData.nombreApellido && userData.nombreApellido.trim() !== "" ? userData.nombreApellido : username;
+          nombreApellido = userData.nombreApellido?.trim() || username;
           escuela = userData.tipoEscuela || "-";
           curso = userData.curso || "-";
           userDetails.textContent = `${nombreApellido} — ${escuela} — ${curso}`;
@@ -190,8 +181,7 @@ th, td {
         gamesHistory = [];
       }
 
-      // Filtramos solo por usuario
-      const userGames = gamesHistory.filter(game => game.usuario.toLowerCase() === username);
+      const userGames = gamesHistory.filter(game => (game.usuario || "").toLowerCase() === username);
 
       if (userGames.length > 0) {
         userGames.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
@@ -209,13 +199,9 @@ th, td {
         tbody.innerHTML = "<tr><td colspan='4'>No hay registros de juegos para este usuario.</td></tr>";
       }
 
-      document.getElementById("asrad").addEventListener("click", () => {
-        window.location.href = "srad.html";
-      });
-
-      document.getElementById("generate-excel").addEventListener("click", () => {
+      excelButton.addEventListener("click", () => {
         const currentDate = new Date().toISOString().slice(0, 10);
-        const fileName = `${currentDate}_${username}.xls`;
+        const fileName = `${currentDate}_${username || 'usuario'}.xls`;
         const tableContent = document.getElementById('games-table').outerHTML;
 
         const excelData = `
@@ -225,7 +211,7 @@ th, td {
           <head><meta charset="UTF-8"></head>
           <body>
             <table>
-              <tr><td colspan="4"><h1 style="font-size:24px; text-align:center;">INFORME DE ${username}</h1></td></tr>
+              <tr><td colspan="4"><h1 style="font-size:24px; text-align:center;">INFORME DE ${username || 'Usuario'}</h1></td></tr>
               <tr><td colspan="4" style="text-align:center;">${userDetails.textContent}</td></tr>
               <tr></tr>
               ${tableContent}
@@ -237,6 +223,7 @@ th, td {
         const blob = new Blob([excelData], { type: 'application/vnd.ms-excel' });
         saveAs(blob, fileName);
       });
+
     });
   </script>
 </body>
