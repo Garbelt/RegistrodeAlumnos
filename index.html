@@ -64,7 +64,7 @@
 
     <form id="registrationForm">
       <label for="nombreApellido">Nombre y Apellido:</label>
-      <input type="text" id="nombreApellido" required/>
+      <input type="text" id="nombreApellido" required />
       <br><br>
 
       <label for="usuario">Nombre de Usuario:</label>
@@ -75,11 +75,12 @@
       <div class="inline-group">
         <select id="tipoEscuela" required>
           <option value="" disabled hidden selected>Tipo y Número</option>
-          <option value="secundaria">EESO N°239</option>
-          <option value="secundaria">EESO N°362</option>
-          <option value="secundaria">EESO N°529</option>
-          <option value="primaria">PRI N° 305</option>
-          <option value="primaria">PRI N° 291</option>
+          <option value="EESO N°239">EESO N°239</option>
+          <option value="EESO N°362">EESO N°362</option>
+          <option value="EESO N°529">EESO N°529</option>
+          <option value="PRI N° 305">PRI N°305</option>
+          <option value="PRI N° 291">PRI N°291</option>
+          <option value="PRI N° 000">PRI N°000</option>
         </select>
 
         <select id="curso" required>
@@ -105,7 +106,6 @@
       storageBucket: "juego001-469b6.appspot.com",
       messagingSenderId: "528847999661",
       appId: "1:528847999661:web:6085a104fe64262a042c24",
-      measurementId: "G-XC212WQYHK",
       databaseURL: "https://juego001-469b6-default-rtdb.firebaseio.com"
     };
 
@@ -116,8 +116,12 @@
     const curso = document.getElementById('curso');
 
     const cursos = {
-      secundaria: ['1er año', '2do año', '3er año', '4to año', '5to año', '6to año'],
-      primaria: ['1er grado', '2do grado', '3er grado', '4to grado', '5to grado', '6to grado', '7mo grado']
+      "EESO N°239": ['1er año', '2do año', '3er año', '4to año', '5to año', '6to año'],
+      "EESO N°362": ['1er año', '2do año', '3er año', '4to año', '5to año', '6to año'],
+      "EESO N°529": ['1er año', '2do año', '3er año', '4to año', '5to año', '6to año'],
+      "PRI N° 305": ['1er grado', '2do grado', '3er grado', '4to grado', '5to grado', '6to grado', '7mo grado'],
+      "PRI N° 291": ['1er grado', '2do grado', '3er grado', '4to grado', '5to grado', '6to grado', '7mo grado'],
+      "PRI N° 000": ['1er grado', '2do grado', '3er grado', '4to grado', '5to grado', '6to grado', '7mo grado']
     };
 
     tipoEscuela.addEventListener('change', () => {
@@ -150,10 +154,19 @@
 
       try {
         const dbRef = ref(database);
-        const snapshot = await get(child(dbRef, `usuarios/${userKey}`));
+        const snapshot = await get(child(dbRef, `usuarios`));
+        const allUsers = snapshot.exists() ? snapshot.val() : {};
 
-        if (snapshot.exists()) {
-          alert("Este usuario ya está registrado.");
+        const usuarioExistente = allUsers[userKey];
+        const nombreExistente = Object.values(allUsers).some(user => user.nombreApellido.toLowerCase() === nombreApellido.toLowerCase());
+
+        if (usuarioExistente) {
+          alert("Este nombre de usuario ya está registrado.");
+          return;
+        }
+
+        if (nombreExistente) {
+          alert("Ya existe una inscripción con este nombre y apellido.");
           return;
         }
 
@@ -163,12 +176,6 @@
           tipoEscuela: tipoEscuelaVal,
           curso: cursoVal
         });
-
-        let existingUsers = JSON.parse(localStorage.getItem('users')) || [];
-        if (!existingUsers.includes(usuario)) {
-          existingUsers.push(usuario);
-          localStorage.setItem('users', JSON.stringify(existingUsers));
-        }
 
         localStorage.setItem('username', usuario);
         alert("✅ ¡Registro exitoso! Bienvenido, " + nombreApellido + "!");
