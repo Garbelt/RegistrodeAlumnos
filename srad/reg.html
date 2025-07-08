@@ -137,8 +137,7 @@
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
 
-    const asradButton = document.getElementById("asrad");
-    asradButton.addEventListener("click", () => {
+    document.getElementById("asrad").addEventListener("click", () => {
       window.location.href = "./srad.html";
     });
 
@@ -153,52 +152,84 @@
 
       usernameTitle.textContent = username;
 
-      let nombreApellido = "";
-      let escuela = "";
-      let curso = "";
-
-      try {
-        const snapshot = await database.ref(`usuarios/${username}`).once('value');
-        const userData = snapshot.val();
-        if (userData) {
-          nombreApellido = userData.nombreApellido?.trim() || username;
-          escuela = userData.tipoEscuela || "-";
-          curso = userData.curso || "-";
-          userDetails.textContent = `${nombreApellido} — ${escuela} — ${curso}`;
-        } else {
-          nombreApellido = username;
-          userDetails.textContent = "Usuario no encontrado en Firebase.";
+      // Mostrar info usuario
+      async function cargarInfoUsuario() {
+        try {
+          const snapshot = await database.ref(`usuarios/${username}`).once('value');
+          const userData = snapshot.val();
+          if (userData) {
+            const nombreApellido = userData.nombreApellido?.trim() || username;
+            const escuela = userData.tipoEscuela || "-";
+            const curso = userData.curso || "-";
+            userDetails.textContent = `${nombreApellido} — ${escuela} — ${curso}`;
+            return nombreApellido;
+          } else {
+            userDetails.textContent = "Usuario no encontrado en Firebase.";
+            return username;
+          }
+        } catch {
+          userDetails.textContent = "Error al obtener datos.";
+          return username;
         }
-      } catch (error) {
-        nombreApellido = username;
-        userDetails.textContent = "Error al obtener datos.";
       }
 
-      let gamesHistory = [];
-      try {
-        gamesHistory = JSON.parse(localStorage.getItem("gamesHistory")) || [];
-      } catch {
-        gamesHistory = [];
+      // Leer juegos Firebase (regresa array)
+      async function leerJuegosFirebase() {
+        try {
+          const snapshot = await database.ref(`usuarios/${username}/juegos`).once('value');
+          const data = snapshot.val();
+          if (!data) return null;
+          return Object.values(data);
+        } catch (e) {
+          console.log("Error leyendo juegos Firebase:", e);
+          return null;
+        }
       }
 
-      const userGames = gamesHistory.filter(game => (game.usuario || "").toLowerCase() === username);
+      // Leer juegos localStorage (array)
+      function leerJuegosLocal() {
+        try {
+          const stored = JSON.parse(localStorage.getItem("gamesHistory")) || [];
+          return stored.filter(game => (game.usuario || "").toLowerCase() === username);
+        } catch {
+          return [];
+        }
+      }
 
-      if (userGames.length > 0) {
-        userGames.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-        userGames.forEach((game, index) => {
+      // Mostrar tabla juegos
+      function mostrarJuegos(juegos, nombreApellido) {
+        tbody.innerHTML = "";
+        if (!juegos || juegos.length === 0) {
+          tbody.innerHTML = "<tr><td colspan='4'>No hay registros de juegos para este usuario.</td></tr>";
+          return;
+        }
+
+        // Ordenar por fecha descendente (convierte strings a Date)
+        juegos.sort((a,b) => new Date(b.fecha) - new Date(a.fecha));
+
+        juegos.forEach((game, i) => {
           const row = document.createElement("tr");
           row.innerHTML = `
-            <td>${index + 1}</td>
+            <td>${i + 1}</td>
             <td title="${nombreApellido}">${nombreApellido}</td>
-            <td title="${game.game}">${game.game}</td>
+            <td title="${game.juego || game.game}">${game.juego || game.game}</td>
             <td>${game.puntaje}</td>
           `;
           tbody.appendChild(row);
         });
-      } else {
-        tbody.innerHTML = "<tr><td colspan='4'>No hay registros de juegos para este usuario.</td></tr>";
       }
 
+      // Carga principal
+      const nombreApellido = await cargarInfoUsuario();
+      let juegos = await leerJuegosFirebase();
+
+      if (!juegos || juegos.length === 0) {
+        juegos = leerJuegosLocal();
+      }
+
+      mostrarJuegos(juegos, nombreApellido);
+
+      // Exportar Excel
       excelButton.addEventListener("click", () => {
         const currentDate = new Date().toISOString().slice(0, 10);
         const fileName = `${currentDate}_${username || 'usuario'}.xls`;
