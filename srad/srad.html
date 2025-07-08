@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>SRAD - Sistema de Registro y Almacenamiento de Datos</title>
   <style>
     body {
@@ -28,59 +28,6 @@
       text-align: center;
       margin-bottom: 10px;
     }
-
-.filter-table {
-  width: 100%;
-  table-layout: fixed;
-  border-collapse: collapse;
-  margin-top: 20px;
-  border: none;
-}
-
-.filter-table td {
-  border: none !important;
-  background: transparent !important;
-  padding: 4px;
-}
-
-  .filter-wrapper {
-    margin-top: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .filter-labels {
-    display: flex;
-    gap: 70px;  /* Espacio entre "Escuela" y "Curso" */
-    margin-bottom: 8px;
-    font-weight: bold;
-  }
-
-  .filter-inner {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-
-  .filter-inner select,
-  .filter-inner button {
-    padding: 6px 10px;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-  }
-
-  .filter-inner button {
-    background-color: #337ab7;
-    color: white;
-    border: none;
-    cursor: pointer;
-  }
-
-  .filter-inner button:hover {
-    background-color: #286090;
-  }
 
     table {
       width: 100%;
@@ -125,248 +72,99 @@
   <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-database-compat.js"></script>
 </head>
 <body>
-<div class="container">
-  <h2>SRAD - Sistema de Registro y Almacenamiento de Datos</h2>
+  <div class="container">
+    <h2>SRAD - Sistema de Registro y Almacenamiento de Datos</h2>
 
-<table class="filter-table">
-  <colgroup>
-    <col style="width:10%">
-    <col style="width:20%">
-    <col style="width:5%">
-    <col style="width:5%">
-    <col style="width:20%">
-    <col style="width:5%">
-    <col style="width:5%">
-    <col style="width:20%">
-    <col style="width:10%">
-  </colgroup>
-
-  <tr>
-    <td></td>
-    <td style="text-align: left; font-size: 11px; font-weight: bold;">Escuela</td>
-    <td></td>
-    <td></td>
-    <td style="text-align: left; font-size: 11px; font-weight: bold;">Curso</td>
-    <td></td>
-    <td></td>
-    <td></td>
-    <td></td>
-  </tr>
-
-  <tr>
-    <td></td>
-    <td>
-      <select id="schoolFilter" style="padding: 4px; border-radius: 4px; width: 100%; font-size: 12px;">
-        <option value="">Todas</option>
-      </select>
-    </td>
-    <td></td>
-    <td></td>
-    <td>
-      <select id="courseFilter" style="padding: 4px; border-radius: 4px; width: 100%; font-size: 12px;">
-        <option value="">Todos</option>
-      </select>
-    </td>
-    <td></td>
-    <td></td>
-    <td>
-      <button id="clearFilters" style="padding: 6px 10px; width: 100%; font-size: 12px; border-radius: 4px; border: none; background-color: #337ab7; color: white;">
-        Limpiar Filtros
-      </button>
-    </td>
-    <td></td>
-  </tr>
-</table>
-
-
-
-
-
-
-  <table>
-    <thead>
-      <tr>
-        <th></th>
-        <th>Usuario</th>
-        <th>Acciones</th>
-      </tr>
-    </thead>
-    <tbody id="usersList"></tbody>
-  </table>
-
-  <div style="text-align: center; margin-top: 25px;">
-    <button id="deleteAllButton" style="
-      background-color: #d9534f;
-      color: white;
-      padding: 10px 20px;
-      border-radius: 5px;
-      border: none;
-      font-weight: bold;
-      cursor: pointer;
-    ">
-      🛑 Eliminar Todos los Usuarios
-    </button>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Nombre y Apellido</th>
+          <th>Usuario</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="usersList"></tbody>
+    </table>
   </div>
-</div>
 
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBVZaysx9d6u6P13DYINPtcinpf79Sgx4U",
+      authDomain: "juego001-469b6.firebaseapp.com",
+      databaseURL: "https://juego001-469b6-default-rtdb.firebaseio.com",
+      projectId: "juego001-469b6",
+      storageBucket: "juego001-469b6.appspot.com",
+      messagingSenderId: "528847999661",
+      appId: "1:528847999661:web:6085a104fe64262a042c24"
+    };
 
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyBVZaysx9d6u6P13DYINPtcinpf79Sgx4U",
-    authDomain: "juego001-469b6.firebaseapp.com",
-    databaseURL: "https://juego001-469b6-default-rtdb.firebaseio.com",
-    projectId: "juego001-469b6",
-    storageBucket: "juego001-469b6.appspot.com",
-    messagingSenderId: "528847999661",
-    appId: "1:528847999661:web:6085a104fe64262a042c24"
-  };
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
 
-  firebase.initializeApp(firebaseConfig);
-  const database = firebase.database();
-
-  let allUsersData = [];
-
-  const schoolFilter = document.getElementById('schoolFilter');
-  const courseFilter = document.getElementById('courseFilter');
-
-  const primaryCourses = [
-    '1er grado', '2do grado', '3er grado', '4to grado',
-    '5to grado', '6to grado', '7mo grado'
-  ];
-
-  const secondaryCourses = [
-    '1er año', '2do año', '3er año', '4to año',
-    '5to año', '6to año'
-  ];
-
-  async function getUsersFromFirebase() {
-    const snapshot = await database.ref('usuarios').once('value');
-    return snapshot.val() || {};
-  }
-
-  function populateFilters(users) {
-    const schools = new Set();
-
-    Object.values(users).forEach(user => {
-      if (user.tipoEscuela) schools.add(user.tipoEscuela);
-    });
-
-    schoolFilter.innerHTML = '<option value="">Todas</option>';
-    courseFilter.innerHTML = '<option value="">Todos</option>';
-
-    schools.forEach(school => {
-      const opt = document.createElement('option');
-      opt.value = school;
-      opt.textContent = school;
-      schoolFilter.appendChild(opt);
-    });
-  }
-
-  function updateCourseOptions() {
-    const selectedSchool = schoolFilter.value.trim().toUpperCase();
-    courseFilter.innerHTML = '<option value="">Todos</option>';
-
-    let courses = [];
-
-    if (selectedSchool.startsWith('PRI')) {
-      courses = primaryCourses;
-    } else if (selectedSchool.startsWith('EESO') || selectedSchool.startsWith('SEC')) {
-      courses = secondaryCourses;
+    async function getUsersFromFirebase() {
+      const snapshot = await database.ref('usuarios').once('value');
+      const data = snapshot.val() || {};
+      // Convertimos en array con objetos: {userKey, nombreApellido, usuario}
+      return Object.entries(data).map(([key, value]) => ({
+        userKey: key.toLowerCase(),
+        nombreApellido: value.nombreApellido || '',
+        usuario: value.usuario || key
+      }));
     }
 
-    courses.forEach(course => {
-      const opt = document.createElement('option');
-      opt.value = course;
-      opt.textContent = course;
-      courseFilter.appendChild(opt);
-    });
+    function renderUsers(users) {
+      const tbody = document.getElementById('usersList');
+      tbody.innerHTML = '';
 
-    applyFilters();
-  }
+      users.forEach((user, index) => {
+        const row = document.createElement('tr');
 
-  function displayUsersList(filteredUsers = null) {
-    const usersList = document.getElementById('usersList');
-    usersList.innerHTML = '';
+        const numberCell = document.createElement('td');
+        numberCell.textContent = index + 1;
 
-    const usersToShow = filteredUsers || allUsersData;
+        const nombreCell = document.createElement('td');
+        nombreCell.textContent = user.nombreApellido;
 
-    usersToShow.forEach(user => {
-      const row = document.createElement('tr');
+        const usuarioCell = document.createElement('td');
+        usuarioCell.textContent = user.usuario;
 
-      const marginCell = document.createElement('td');
-      marginCell.textContent = '';
+        const actionsCell = document.createElement('td');
+        actionsCell.className = 'action-buttons';
 
-      const userCell = document.createElement('td');
-      userCell.textContent = user.username;
+        const infoButton = document.createElement('button');
+        infoButton.textContent = 'Ver Info';
+        infoButton.onclick = () => {
+          window.location.href = 'reg.html?username=' + encodeURIComponent(user.userKey);
+        };
 
-      const actionsCell = document.createElement('td');
-      actionsCell.className = 'action-buttons';
+        const deleteButton = document.createElement('button');
+        deleteButton.textContent = 'Eliminar';
+        deleteButton.onclick = () => {
+          if(confirm(`¿Eliminar usuario ${user.usuario}?`)){
+            database.ref('usuarios/' + user.userKey).remove().then(() => loadUsers());
+          }
+        };
 
-      const infoButton = document.createElement('button');
-      infoButton.textContent = 'Ver Info';
-      infoButton.addEventListener('click', () => {
-        window.location.href = 'reg.html?username=' + encodeURIComponent(user.username);
+        actionsCell.appendChild(infoButton);
+        actionsCell.appendChild(deleteButton);
+
+        row.appendChild(numberCell);
+        row.appendChild(nombreCell);
+        row.appendChild(usuarioCell);
+        row.appendChild(actionsCell);
+
+        tbody.appendChild(row);
       });
+    }
 
-      const deleteButton = document.createElement('button');
-      deleteButton.textContent = 'Eliminar';
-      deleteButton.addEventListener('click', () => deleteUser(user.username));
+    async function loadUsers() {
+      const firebaseUsers = await getUsersFromFirebase();
+      renderUsers(firebaseUsers);
+    }
 
-      actionsCell.appendChild(infoButton);
-      actionsCell.appendChild(deleteButton);
-
-      row.appendChild(marginCell);
-      row.appendChild(userCell);
-      row.appendChild(actionsCell);
-
-      usersList.appendChild(row);
-    });
-  }
-
-  function applyFilters() {
-    const schoolValue = schoolFilter.value;
-    const courseValue = courseFilter.value;
-
-    const filtered = allUsersData.filter(user => {
-      const schoolMatch = !schoolValue || user.tipoEscuela === schoolValue;
-      const courseMatch = !courseValue || user.curso === courseValue;
-      return schoolMatch && courseMatch;
-    });
-
-    displayUsersList(filtered);
-  }
-
-  function deleteUser(username) {
-    database.ref('usuarios/' + username.toLowerCase()).remove().then(() => init());
-  }
-
-  document.getElementById('clearFilters').addEventListener('click', () => {
-    schoolFilter.value = '';
-    courseFilter.innerHTML = '<option value="">Todos</option>';
-    displayUsersList();
-  });
-
-  document.getElementById('deleteAllButton').addEventListener('click', () => {
-    database.ref('usuarios').remove().then(() => init());
-  });
-
-  schoolFilter.addEventListener('change', updateCourseOptions);
-  courseFilter.addEventListener('change', applyFilters);
-
-  async function init() {
-    const firebaseData = await getUsersFromFirebase();
-    allUsersData = Object.entries(firebaseData).map(([username, data]) => ({
-      username,
-      tipoEscuela: data.tipoEscuela || '',
-      curso: data.curso || ''
-    }));
-
-    populateFilters(firebaseData);
-    displayUsersList();
-  }
-
-  init();
-</script>
+    loadUsers();
+  </script>
 </body>
 </html>
 
