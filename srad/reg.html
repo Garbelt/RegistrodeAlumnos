@@ -19,7 +19,7 @@
       border-radius: 10px;
       display: inline-block;
       padding: 20px;
-      max-width: 700px;
+      max-width: 800px;
       overflow-x: auto;
       margin-top: 20px;
       background-color: #fff;
@@ -40,6 +40,7 @@
       padding: 10px;
       border-bottom: 3px solid #002050;
       box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+      text-align: center;
     }
 
     tbody tr:nth-child(even) {
@@ -50,6 +51,7 @@
       padding: 8px;
       border: 1px solid #ddd;
       text-align: center;
+      word-wrap: break-word;
     }
 
     .title-line1 {
@@ -85,10 +87,10 @@
     <table id="games-table">
       <thead>
         <tr>
-          <th>#</th>
-          <th>Nombre y Apellido</th>
-          <th>Juego</th>
-          <th>Puntaje</th>
+          <th style="width: 5%;">#</th>
+          <th style="width: 15%;">Fecha</th>
+          <th style="width: 60%;">Juego</th>
+          <th style="width: 15%;">Puntaje</th>
         </tr>
       </thead>
       <tbody id="games-history"></tbody>
@@ -148,18 +150,17 @@
       }
     }
 
-async function leerJuegosFirebase() {
-  try {
-    const snapshot = await database.ref('/games').once('value');
-    const data = snapshot.val();
-    if (!data) return [];
-    return Object.values(data).filter(game => (game.usuario || "").toLowerCase() === username);
-  } catch (e) {
-    console.log("Error al leer juegos:", e);
-    return [];
-  }
-}
-
+    async function leerJuegosFirebase() {
+      try {
+        const snapshot = await database.ref('/games').once('value');
+        const data = snapshot.val();
+        if (!data) return [];
+        return Object.values(data).filter(game => (game.usuario || "").toLowerCase() === username);
+      } catch (e) {
+        console.log("Error al leer juegos:", e);
+        return [];
+      }
+    }
 
     function leerJuegosLocal() {
       try {
@@ -168,6 +169,16 @@ async function leerJuegosFirebase() {
       } catch {
         return [];
       }
+    }
+
+    function formatearFecha(fechaStr) {
+      // Asume formato ISO o yyyy-mm-dd, cambia a dd/mm/aa
+      const fecha = new Date(fechaStr);
+      if (isNaN(fecha)) return fechaStr;
+      const dia = fecha.getDate().toString().padStart(2, '0');
+      const mes = (fecha.getMonth() + 1).toString().padStart(2, '0');
+      const anio = fecha.getFullYear().toString().slice(-2);
+      return `${dia}/${mes}/${anio}`;
     }
 
     function mostrarJuegos(juegos, nombreApellido) {
@@ -180,12 +191,36 @@ async function leerJuegosFirebase() {
       juegos.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
 
       juegos.forEach((game, index) => {
+        const fechaFormateada = game.fecha ? formatearFecha(game.fecha) : '-';
+
+        // Juego con nombre y código
+        // Si tenés guardado un campo 'title' con nombre legible, lo usamos, si no el código.
+        // Si solo está el código (ej: "DPS_rcnc"), le asignamos un nombre legible:
+        let nombreJuego = '';
+        const codigoJuego = game.juego || game.game || '-';
+
+        // Map de códigos a nombres legibles:
+        const juegosMap = {
+          "DPS_rcnc": "Reconocer diferencia entre pares de sonido",
+          // Agregá otros códigos y sus nombres aquí según lo que uses
+        };
+
+        if (game.title) {
+          nombreJuego = game.title;
+        } else if (juegosMap[codigoJuego]) {
+          nombreJuego = juegosMap[codigoJuego];
+        } else {
+          nombreJuego = codigoJuego;
+        }
+
+        const puntaje = game.puntaje ?? '-';
+
         const row = document.createElement("tr");
         row.innerHTML = `
           <td>${index + 1}</td>
-          <td>${nombreApellido}</td>
-          <td>${game.juego || game.game || '-'}</td>
-          <td>${game.puntaje ?? '-'}</td>
+          <td>${fechaFormateada}</td>
+          <td>${nombreJuego} (${codigoJuego})</td>
+          <td>${puntaje}</td>
         `;
         tbody.appendChild(row);
       });
