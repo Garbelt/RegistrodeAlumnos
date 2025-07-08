@@ -22,6 +22,7 @@
       max-width: 700px;
       overflow-x: auto;
       margin-top: 20px;
+      background-color: #fff;
     }
 
     table {
@@ -45,33 +46,9 @@
       background-color: #f2f2f2;
     }
 
-    tbody tr:nth-child(odd) {
-      background-color: white;
-    }
-
     th, td {
       padding: 8px;
       border: 1px solid #ddd;
-      text-align: center;
-    }
-
-    th:nth-child(1), td:nth-child(1) {
-      width: 50px;
-    }
-
-    th:nth-child(2), td:nth-child(2) {
-      width: 50%;
-      text-align: left;
-      padding-left: 10px;
-    }
-
-    th:nth-child(3), td:nth-child(3) {
-      width: 15ch;
-      text-align: center;
-    }
-
-    th:nth-child(4), td:nth-child(4) {
-      width: 13ch;
       text-align: center;
     }
 
@@ -142,121 +119,115 @@
     });
 
     const excelButton = document.getElementById("generate-excel");
+    const usernameTitle = document.getElementById("username-title");
+    const userDetails = document.getElementById("user-details");
+    const tbody = document.getElementById("games-history");
 
-    document.addEventListener("DOMContentLoaded", async () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const username = (urlParams.get('username') || "").toLowerCase();
-      const usernameTitle = document.getElementById("username-title");
-      const userDetails = document.getElementById("user-details");
-      const tbody = document.getElementById("games-history");
+    const urlParams = new URLSearchParams(window.location.search);
+    const username = (urlParams.get('username') || "").toLowerCase();
 
-      usernameTitle.textContent = username;
+    usernameTitle.textContent = username;
 
-      // Mostrar info usuario
-      async function cargarInfoUsuario() {
-        try {
-          const snapshot = await database.ref(`usuarios/${username}`).once('value');
-          const userData = snapshot.val();
-          if (userData) {
-            const nombreApellido = userData.nombreApellido?.trim() || username;
-            const escuela = userData.tipoEscuela || "-";
-            const curso = userData.curso || "-";
-            userDetails.textContent = `${nombreApellido} — ${escuela} — ${curso}`;
-            return nombreApellido;
-          } else {
-            userDetails.textContent = "Usuario no encontrado en Firebase.";
-            return username;
-          }
-        } catch {
-          userDetails.textContent = "Error al obtener datos.";
+    async function cargarInfoUsuario() {
+      try {
+        const snapshot = await database.ref(`usuarios/${username}`).once('value');
+        const userData = snapshot.val();
+        if (userData) {
+          const nombreApellido = userData.nombreApellido?.trim() || username;
+          const escuela = userData.tipoEscuela || "-";
+          const curso = userData.curso || "-";
+          userDetails.textContent = `${nombreApellido} — ${escuela} — ${curso}`;
+          return nombreApellido;
+        } else {
+          userDetails.textContent = "Usuario no encontrado.";
           return username;
         }
+      } catch {
+        userDetails.textContent = "Error al obtener información.";
+        return username;
+      }
+    }
+
+async function leerJuegosFirebase() {
+  try {
+    const snapshot = await database.ref('/games').once('value');
+    const data = snapshot.val();
+    if (!data) return [];
+    return Object.values(data).filter(game => (game.usuario || "").toLowerCase() === username);
+  } catch (e) {
+    console.log("Error al leer juegos:", e);
+    return [];
+  }
+}
+
+
+    function leerJuegosLocal() {
+      try {
+        const stored = JSON.parse(localStorage.getItem("gamesHistory")) || [];
+        return stored.filter(game => (game.usuario || "").toLowerCase() === username);
+      } catch {
+        return [];
+      }
+    }
+
+    function mostrarJuegos(juegos, nombreApellido) {
+      tbody.innerHTML = "";
+      if (!juegos.length) {
+        tbody.innerHTML = "<tr><td colspan='4'>No hay registros de juegos.</td></tr>";
+        return;
       }
 
-      // Leer juegos Firebase (regresa array)
-      async function leerJuegosFirebase() {
-        try {
-          const snapshot = await database.ref(`usuarios/${username}/juegos`).once('value');
-          const data = snapshot.val();
-          if (!data) return null;
-          return Object.values(data);
-        } catch (e) {
-          console.log("Error leyendo juegos Firebase:", e);
-          return null;
-        }
-      }
+      juegos.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
 
-      // Leer juegos localStorage (array)
-      function leerJuegosLocal() {
-        try {
-          const stored = JSON.parse(localStorage.getItem("gamesHistory")) || [];
-          return stored.filter(game => (game.usuario || "").toLowerCase() === username);
-        } catch {
-          return [];
-        }
-      }
+      juegos.forEach((game, index) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${index + 1}</td>
+          <td>${nombreApellido}</td>
+          <td>${game.juego || game.game || '-'}</td>
+          <td>${game.puntaje ?? '-'}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
 
-      // Mostrar tabla juegos
-      function mostrarJuegos(juegos, nombreApellido) {
-        tbody.innerHTML = "";
-        if (!juegos || juegos.length === 0) {
-          tbody.innerHTML = "<tr><td colspan='4'>No hay registros de juegos para este usuario.</td></tr>";
-          return;
-        }
-
-        // Ordenar por fecha descendente (convierte strings a Date)
-        juegos.sort((a,b) => new Date(b.fecha) - new Date(a.fecha));
-
-        juegos.forEach((game, i) => {
-          const row = document.createElement("tr");
-          row.innerHTML = `
-            <td>${i + 1}</td>
-            <td title="${nombreApellido}">${nombreApellido}</td>
-            <td title="${game.juego || game.game}">${game.juego || game.game}</td>
-            <td>${game.puntaje}</td>
-          `;
-          tbody.appendChild(row);
-        });
-      }
-
-      // Carga principal
+    async function cargarTodo() {
       const nombreApellido = await cargarInfoUsuario();
       let juegos = await leerJuegosFirebase();
 
-      if (!juegos || juegos.length === 0) {
+      if (!juegos.length) {
         juegos = leerJuegosLocal();
       }
 
       mostrarJuegos(juegos, nombreApellido);
+    }
 
-      // Exportar Excel
-      excelButton.addEventListener("click", () => {
-        const currentDate = new Date().toISOString().slice(0, 10);
-        const fileName = `${currentDate}_${username || 'usuario'}.xls`;
-        const tableContent = document.getElementById('games-table').outerHTML;
+    cargarTodo();
 
-        const excelData = `
-          <html xmlns:o="urn:schemas-microsoft-com:office:office"
-                xmlns:x="urn:schemas-microsoft-com:office:excel"
-                xmlns="http://www.w3.org/TR/REC-html40">
-          <head><meta charset="UTF-8"></head>
-          <body>
-            <table>
-              <tr><td colspan="4"><h1 style="font-size:24px; text-align:center;">INFORME DE ${username || 'Usuario'}</h1></td></tr>
-              <tr><td colspan="4" style="text-align:center;">${userDetails.textContent}</td></tr>
-              <tr></tr>
-              ${tableContent}
-            </table>
-          </body>
-          </html>
-        `;
+    excelButton.addEventListener("click", () => {
+      const currentDate = new Date().toISOString().slice(0, 10);
+      const fileName = `${currentDate}_${username}.xls`;
+      const tableHTML = document.getElementById('games-table').outerHTML;
 
-        const blob = new Blob([excelData], { type: 'application/vnd.ms-excel' });
-        saveAs(blob, fileName);
-      });
+      const excelHTML = `
+        <html xmlns:o="urn:schemas-microsoft-com:office:office"
+              xmlns:x="urn:schemas-microsoft-com:office:excel"
+              xmlns="http://www.w3.org/TR/REC-html40">
+        <head><meta charset="UTF-8"></head>
+        <body>
+          <table>
+            <tr><td colspan="4"><h1 style="font-size:24px; text-align:center;">INFORME DE ${username}</h1></td></tr>
+            <tr><td colspan="4" style="text-align:center;">${userDetails.textContent}</td></tr>
+            <tr></tr>
+            ${tableHTML}
+          </table>
+        </body>
+        </html>
+      `;
 
+      const blob = new Blob([excelHTML], { type: 'application/vnd.ms-excel' });
+      saveAs(blob, fileName);
     });
   </script>
 </body>
 </html>
-
