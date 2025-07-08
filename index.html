@@ -33,7 +33,6 @@
       color: #333;
     }
 
-    /* Color claro para los placeholders (opciones deshabilitadas) */
     .inline-group select option[disabled] {
       color: #999;
     }
@@ -141,7 +140,7 @@
       event.preventDefault();
 
       const nombreApellido = document.getElementById('nombreApellido').value.trim();
-      const usuario = document.getElementById('usuario').value.trim();
+      const usuario = document.getElementById('usuario').value.trim().toLowerCase();
       const tipoEscuelaVal = tipoEscuela.value;
       const cursoVal = curso.value;
 
@@ -150,15 +149,13 @@
         return;
       }
 
-      const userKey = usuario.toLowerCase();
-
       try {
         const dbRef = ref(database);
         const snapshot = await get(child(dbRef, `usuarios`));
         const allUsers = snapshot.exists() ? snapshot.val() : {};
 
-        const usuarioExistente = allUsers[userKey];
-        const nombreExistente = Object.values(allUsers).some(user => user.nombreApellido.toLowerCase() === nombreApellido.toLowerCase());
+        const usuarioExistente = allUsers[usuario];
+        const nombreExistente = Object.values(allUsers).some(user => (user.nombreApellido || '').toLowerCase() === nombreApellido.toLowerCase());
 
         if (usuarioExistente) {
           alert("Este nombre de usuario ya está registrado.");
@@ -170,15 +167,15 @@
           return;
         }
 
-        await set(ref(database, `usuarios/${userKey}`), {
-          nombreApellido,
-          usuario,
+        await set(ref(database, `usuarios/${usuario}`), {
+          nombreApellido: nombreApellido,
+          usuario: usuario,
           tipoEscuela: tipoEscuelaVal,
           curso: cursoVal
         });
 
         localStorage.setItem('username', usuario);
-        alert("✅ ¡Registro exitoso! Bienvenido, " + nombreApellido + "!");
+        alert("\u2705 \u00a1Registro exitoso! Bienvenido, " + nombreApellido + "!");
 
         document.getElementById('registrationForm').reset();
         curso.innerHTML = '<option value="" disabled hidden selected>Curso</option>';
@@ -191,8 +188,7 @@
     document.getElementById('registrationForm').addEventListener('submit', handleRegistration);
 
     async function handleMenuButtonClick() {
-      const usuario = document.getElementById('usuario').value.trim();
-      const userKey = usuario.toLowerCase();
+      const usuario = document.getElementById('usuario').value.trim().toLowerCase();
 
       if (!usuario) {
         alert("Por favor, ingresa tu nombre de usuario.");
@@ -200,7 +196,7 @@
       }
 
       const dbRef = ref(database);
-      const snapshot = await get(child(dbRef, `usuarios/${userKey}`));
+      const snapshot = await get(child(dbRef, `usuarios/${usuario}`));
 
       if (snapshot.exists()) {
         localStorage.setItem('ActualUs', usuario);
@@ -211,6 +207,7 @@
     }
 
     document.getElementById('menuButton').addEventListener('click', handleMenuButtonClick);
+
   </script>
 </body>
 </html>
