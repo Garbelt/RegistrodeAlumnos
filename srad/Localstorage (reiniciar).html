@@ -1,0 +1,184 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gestión de Usuarios - Borrar Datos</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #f0f0f0;
+      margin: 0;
+    }
+
+    .container {
+      background: white;
+      padding: 30px 40px;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      text-align: center;
+      width: 600px;
+    }
+
+    h1 {
+      margin-bottom: 25px;
+      font-size: 22px;
+      color: #004080;
+    }
+
+    button {
+      width: 100%;
+      padding: 15px;
+      margin: 10px 0;
+      font-size: 16px;
+      border: black;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      color: white;
+    }
+
+    #btnDeleteUsers {
+      background-color: #d9534f;
+    }
+    #btnDeleteUsers:hover {
+      background-color: #b52b27;
+    }
+
+    #btnDeleteLocal {
+      background-color: #5bc0de;
+    }
+    #btnDeleteLocal:hover {
+      background-color: #2a99c9;
+    }
+
+    #btnDeleteAll {
+      background-color: #f0ad4e;
+    }
+    #btnDeleteAll:hover {
+      background-color: #d49028;
+    }
+
+    #btnListUsers {
+      background-color: #5cb85c;
+    }
+    #btnListUsers:hover {
+      background-color: #4cae4c;
+    }
+
+    #statusMessage {
+      margin-top: 20px;
+      color: #333;
+      min-height: 24px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Eliminar Datos de Usuarios y Juegos</h1>
+
+    <button id="btnDeleteUsers">🗑️ Borrar todos los usuarios de Firebase</button>
+    <button id="btnDeleteLocal">🧹 Borrar datos guardados en localStorage</button>
+    <button id="btnDeleteAll">🗑️ Borrar TODOS los usuarios y juegos en Firebase</button>
+    <button id="btnListUsers">📋 Listar usuarios actuales en consola</button>
+
+    <div id="statusMessage"></div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-database-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBVZaysx9d6u6P13DYINPtcinpf79Sgx4U",
+      authDomain: "juego001-469b6.firebaseapp.com",
+      databaseURL: "https://juego001-469b6-default-rtdb.firebaseio.com",
+      projectId: "juego001-469b6",
+      storageBucket: "juego001-469b6.appspot.com",
+      messagingSenderId: "528847999661",
+      appId: "1:528847999661:web:6085a104fe64262a042c24"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    const btnDeleteUsers = document.getElementById('btnDeleteUsers');
+    const btnDeleteLocal = document.getElementById('btnDeleteLocal');
+    const btnDeleteAll = document.getElementById('btnDeleteAll');
+    const btnListUsers = document.getElementById('btnListUsers');
+    const statusMessage = document.getElementById('statusMessage');
+
+    btnDeleteUsers.addEventListener('click', async () => {
+      if (!confirm("¿Estás seguro que quieres borrar TODOS los usuarios en Firebase? Esta acción no se puede deshacer.")) return;
+
+      statusMessage.textContent = "Borrando usuarios en Firebase...";
+      try {
+        await database.ref('usuarios').remove();
+
+        firebase.database().goOffline();
+        firebase.database().goOnline();
+
+        setTimeout(() => {
+          statusMessage.textContent = "✅ Todos los usuarios en Firebase fueron eliminados.";
+        }, 1000);
+      } catch (error) {
+        statusMessage.textContent = "❌ Error al borrar usuarios en Firebase: " + error.message;
+      }
+    });
+
+    btnDeleteLocal.addEventListener('click', () => {
+      if (!confirm("¿Estás seguro que quieres borrar todos los datos guardados en localStorage?")) return;
+
+      const keysToRemove = ['users', 'gamesHistory'];
+      keysToRemove.forEach(key => localStorage.removeItem(key));
+      statusMessage.textContent = "✅ Datos borrados del localStorage.";
+    });
+
+    btnDeleteAll.addEventListener('click', async () => {
+      if (!confirm("⚠️ ¿Estás seguro que quieres borrar TODOS los usuarios y TODOS los juegos en Firebase? Esta acción es IRREVERSIBLE.")) return;
+
+      statusMessage.textContent = "Borrando usuarios y juegos en Firebase...";
+      try {
+        await database.ref('usuarios').remove();
+        await database.ref('games').remove();
+
+        firebase.database().goOffline();
+        firebase.database().goOnline();
+
+        setTimeout(() => {
+          statusMessage.textContent = "✅ TODOS los usuarios y juegos fueron eliminados de Firebase.";
+        }, 1000);
+      } catch (error) {
+        statusMessage.textContent = "❌ Error al borrar datos en Firebase: " + error.message;
+      }
+    });
+
+    btnListUsers.addEventListener('click', async () => {
+      statusMessage.textContent = "Leyendo usuarios de Firebase... Revisa la consola.";
+      try {
+        firebase.database().goOffline();
+        firebase.database().goOnline();
+
+        const snapshot = await database.ref('usuarios').once('value');
+        const data = snapshot.val();
+        if (!data) {
+          console.log('No hay usuarios en la base.');
+          statusMessage.textContent = "No hay usuarios en la base.";
+          return;
+        }
+        console.log('Listado de usuarios actuales:');
+        Object.entries(data).forEach(([key, value]) => {
+          console.log(`UsuarioKey: ${key}, NombreApellido: ${value.nombreApellido || 'N/D'}, Usuario: ${value.usuario || key}`);
+        });
+        statusMessage.textContent = "✅ Usuarios listados en consola.";
+      } catch (error) {
+        statusMessage.textContent = "❌ Error al leer usuarios: " + error.message;
+      }
+    });
+  </script>
+</body>
+</html>

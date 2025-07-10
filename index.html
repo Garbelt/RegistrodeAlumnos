@@ -1,0 +1,255 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BIENVENIDO</title>
+  <style>
+body, html {
+    height: 100%;               /* Necesario para centrar en toda la pantalla */
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background-color: #f9f9f9;
+
+    display: flex;              /* Flexbox */
+    justify-content: center;    /* Centrado horizontal */
+    align-items: center;        /* Centrado vertical */
+}
+
+.container {
+    width: 400px;      
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: white;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    box-sizing: border-box; /* importante para que padding no aumente ancho */
+}
+
+/* En pantallas más pequeñas que 450px, el container toma casi todo el ancho */
+@media (max-width: 450px) {
+    .container {
+        width: 95%;      /* casi todo el ancho disponible */
+        max-width: 400px; /* para no crecer más allá de 400px */
+    }
+}
+
+
+
+
+    h2 {
+      text-align: center;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+      text-align: left;
+    }
+
+        input[type="text"], select {
+            width: 95%;
+            padding: 8px;
+            font-size: 14px;
+            margin-bottom: 20px;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+        }
+
+
+
+    .inline-group {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .inline-group select {
+      flex: 1;
+    }
+
+    .button-group {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    #registrationButton {
+      color: black;
+    }
+
+    #menuButton {
+      background-color: #2980b9;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>BIENVENIDO</h2>
+
+    <form id="registrationForm">
+      <label for="nombreApellido">Nombre y Apellido:</label>
+      <input type="text" id="nombreApellido" required />
+
+      <label for="usuario">Nombre de Usuario:</label>
+      <input type="text" id="usuario" required />
+
+      <label for="tipoEscuela">Escuela:</label>
+      <div class="inline-group">
+        <select id="tipoEscuela" required>
+          <option value="" disabled hidden selected>Tipo y Número</option>
+          <option value="EESO N°239">EESO N°239</option>
+          <option value="EESO N°362">EESO N°362</option>
+          <option value="EESO N°529">EESO N°529</option>
+          <option value="PRI N° 305">PRI N°305</option>
+          <option value="PRI N° 291">PRI N°291</option>
+          <option value="PRI N° 000">PRI N°000</option>
+          <option value="DOCENTE">DOCENTE</option>
+        </select>
+
+        <select id="curso" required>
+          <option value="" disabled hidden selected>Curso</option>
+        </select>
+      </div>
+
+      <div class="button-group">
+        <button type="submit" id="registrationButton">Registrar</button>
+        <button type="button" id="menuButton">Ver Registros</button>
+      </div>
+    </form>
+  </div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+  import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBVZaysx9d6u6P13DYINPtcinpf79Sgx4U",
+    authDomain: "juego001-469b6.firebaseapp.com",
+    projectId: "juego001-469b6",
+    storageBucket: "juego001-469b6.appspot.com",
+    messagingSenderId: "528847999661",
+    appId: "1:528847999661:web:6085a104fe64262a042c24",
+    databaseURL: "https://juego001-469b6-default-rtdb.firebaseio.com"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const database = getDatabase(app);
+
+  const tipoEscuela = document.getElementById('tipoEscuela');
+  const curso = document.getElementById('curso');
+  const menuButton = document.getElementById('menuButton');
+
+  const cursos = {
+    "EESO N°239": ['1er año', '2do año', '3er año', '4to año', '5to año', '6to año'],
+    "EESO N°362": ['1er año', '2do año', '3er año', '4to año', '5to año', '6to año'],
+    "EESO N°529": ['1er año', '2do año', '3er año', '4to año', '5to año', '6to año'],
+    "PRI N° 305": ['1er grado', '2do grado', '3er grado', '4to grado', '5to grado', '6to grado', '7mo grado'],
+    "PRI N° 291": ['1er grado', '2do grado', '3er grado', '4to grado', '5to grado', '6to grado', '7mo grado'],
+    "PRI N° 000": ['1er grado', '2do grado', '3er grado', '4to grado', '5to grado', '6to grado', '7mo grado'],
+    "DOCENTE": ['NINGUNO']
+  };
+
+  tipoEscuela.addEventListener('change', () => {
+    const selected = tipoEscuela.value;
+    curso.innerHTML = '<option value="" disabled hidden selected>Curso</option>';
+    if (selected && cursos[selected]) {
+      cursos[selected].forEach(c => {
+        const option = document.createElement('option');
+        option.value = c;
+        option.textContent = c;
+        curso.appendChild(option);
+      });
+    }
+  });
+
+  async function handleRegistration(event) {
+    event.preventDefault();
+
+    const nombreApellido = document.getElementById('nombreApellido').value.trim();
+    const usuario = document.getElementById('usuario').value.trim().toLowerCase();
+    const tipoEscuelaVal = tipoEscuela.value;
+    const cursoVal = curso.value;
+
+    if (!nombreApellido || !usuario || !tipoEscuelaVal || !cursoVal) {
+      alert("Por favor, completa todos los campos.");
+      return;
+    }
+
+    try {
+      const dbRef = ref(database);
+      const snapshot = await get(child(dbRef, `usuarios`));
+      const allUsers = snapshot.exists() ? snapshot.val() : {};
+
+      const usuarioExistente = allUsers[usuario];
+      const nombreExistente = Object.values(allUsers).some(user => (user.nombreApellido || '').toLowerCase() === nombreApellido.toLowerCase());
+
+      if (usuarioExistente || nombreExistente) {
+        alert(usuarioExistente ? "Este nombre de usuario ya está registrado." : "Ya existe una inscripción con este nombre y apellido.");
+        menuButton.disabled = false;
+        localStorage.setItem('ActualUs', usuario);
+        return;
+      }
+
+      await set(ref(database, `usuarios/${usuario}`), {
+        nombreApellido: nombreApellido,
+        usuario: usuario,
+        tipoEscuela: tipoEscuelaVal,
+        escuela: tipoEscuelaVal,
+        curso: cursoVal,
+        rol: tipoEscuelaVal === 'DOCENTE' ? 'docente' : 'alumno'
+      });
+
+      localStorage.setItem('ActualUs', usuario);
+      alert("✅ ¡Registro exitoso! Puedes registrar otro usuario.");
+      
+      // Limpiar los campos:
+      document.getElementById('registrationForm').reset();
+      curso.innerHTML = '<option value="" disabled hidden selected>Curso</option>';
+      menuButton.disabled = true;
+
+    } catch (error) {
+      alert("Error al registrar: " + error.message);
+    }
+  }
+
+async function handleMenuButtonClick() {
+  const usuario = document.getElementById('usuario').value.trim().toLowerCase();
+
+  if (!usuario) {
+    alert("Por favor, ingresa tu nombre de usuario.");
+    return;
+  }
+
+  const dbRef = ref(database);
+  const snapshot = await get(child(dbRef, `usuarios/${usuario}`));
+
+  if (snapshot.exists()) {
+    localStorage.setItem('ActualUs', usuario);
+    window.location.href = 'srad/srad.html';  // Ir siempre a SRAD
+  } else {
+    alert("Usuario no registrado. Por favor regístrate.");
+  }
+}
+
+
+  document.getElementById('registrationForm').addEventListener('submit', handleRegistration);
+  document.getElementById('menuButton').addEventListener('click', handleMenuButtonClick);
+</script>
+
+</body>
+</html>
