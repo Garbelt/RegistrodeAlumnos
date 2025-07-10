@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -15,24 +15,16 @@
       background-color: #f9f9f9;
     }
 
-.container {
-  border: 2px solid #ccc;
-  border-radius: 10px;
-  padding: 20px;
-  width: 95%;
-  max-width: 100%;
-  margin-top: 20px;
-  background: white;
-  box-sizing: border-box;
-}
-
-@media (max-width: 600px) {
-  table {
-    display: block;
-    overflow-x: auto;
-    width: 100%;
-  }
-}
+    .container {
+      border: 2px solid #ccc;
+      border-radius: 10px;
+      padding: 20px;
+      width: 95%;
+      max-width: 1000px;
+      margin-top: 20px;
+      background: white;
+      box-sizing: border-box;
+    }
 
     h2 {
       text-align: center;
@@ -50,12 +42,19 @@
       font-size: 14px;
     }
 
+    .table-container {
+      width: 100%;
+      margin-top: 10px;
+      overflow-x: hidden;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 10px;
-      table-layout: fixed;
-      font-size: 13px;
+      table-layout: auto;
+      font-size: 12px;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
     }
 
     thead th {
@@ -65,7 +64,7 @@
       border-bottom: 3px solid #002050;
       box-shadow: 0 2px 5px rgba(0,0,0,0.3);
       font-size: 11px;
-      word-wrap: break-word;
+      word-break: break-word;
       white-space: normal;
       line-height: 1.2;
     }
@@ -75,13 +74,12 @@
     }
 
     th, td {
-      padding: 5px;
+      padding: 4px;
       border: 1px solid #ddd;
       text-align: center;
-      word-wrap: break-word;
+      word-break: break-word;
       white-space: normal;
       line-height: 1.2;
-      overflow-wrap: break-word;
     }
 
     tbody tr:hover {
@@ -115,70 +113,66 @@
     th:nth-child(10), td:nth-child(10) { width: 55px; }
     th:nth-child(11), td:nth-child(11) { width: 100px; }
 
-</style>
+  </style>
 
   <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-database-compat.js"></script>
 </head>
 <body>
-<div class="container">
-  <h2>SRAD - Sistema de Registro y Almacenamiento de Datos</h2>
+  <div class="container">
+    <h2>SRAD - Sistema de Registro y Almacenamiento de Datos</h2>
 
-  <div class="filters">
-    <label>
-      Escuela:
-      <select id="filterEscuela" onchange="applyFilters()">
-        <option value="">Todas</option>
-      </select>
-    </label>
-    <label>
-      Curso:
-      <select id="filterCurso" onchange="applyFilters()">
-        <option value="">Todos</option>
-      </select>
-    </label>
+    <div class="filters">
+      <label>
+        Escuela:
+        <select id="filterEscuela" onchange="applyFilters()">
+          <option value="">Todas</option>
+        </select>
+      </label>
+      <label>
+        Curso:
+        <select id="filterCurso" onchange="applyFilters()">
+          <option value="">Todos</option>
+        </select>
+      </label>
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+      <button onclick="window.location.href='../index.html'" style="
+        padding: 8px 15px;
+        font-size: 13px;
+        border-radius: 5px;
+        background-color: #2980b9;
+        color: white;
+        border: none;
+        cursor: pointer;">
+        ⬅️ Volver al Inicio
+      </button>
+    </div>
+
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Nombre<br>Apellido</th>
+            <th>Usuario</th>
+            <th>Escuela</th>
+            <th>Curso</th>
+            <th>P2<br>Curso</th>
+            <th>P3<br>Escuela</th>
+            <th>P4<br>C+E</th>
+            <th>P5<br>Gral</th>
+            <th>P6<br>Oculto</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
+        <tbody id="usersList">
+          <tr><td colspan="11">Cargando usuarios...</td></tr>
+        </tbody>
+      </table>
+    </div>
   </div>
-
-  <!-- 🔙 Botón Volver al Inicio -->
-  <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
-    <button onclick="window.location.href='../index.html'" style="
-      padding: 8px 15px;
-      font-size: 13px;
-      border-radius: 5px;
-      background-color: #2980b9;
-      color: white;
-      border: none;
-      cursor: pointer;
-    ">
-      ⬅️ Volver al Inicio
-    </button>
-  </div>
-
-
-<div class="table-container">
-  <table>
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>Nombre<br>Apellido</th>
-        <th>Usuario</th>
-        <th>Escuela</th>
-        <th>Curso</th>
-        <th>P2<br>Curso</th>
-        <th>P3<br>Escuela</th>
-        <th>P4<br>C+E</th>
-        <th>P5<br>Gral</th>
-        <th>P6<br>Oculto</th>
-        <th>Acción</th>
-      </tr>
-    </thead>
-    <tbody id="usersList">
-      <tr><td colspan="11">Cargando usuarios...</td></tr>
-    </tbody>
-  </table>
-</div>
-</div>
-
 
   <script>
     const firebaseConfig = {
