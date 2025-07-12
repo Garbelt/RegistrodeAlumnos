@@ -1,8 +1,8 @@
 ﻿<!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>SRAD - Sistema de Registro y Almacenamiento de Datos</title>
   <style>
     body {
@@ -53,7 +53,7 @@
       border-collapse: collapse;
       table-layout: auto;
       font-size: 13px;
-      min-width: 700px; /* Esto fuerza un mínimo pero permite el scroll en pantallas muy chicas */
+      min-width: 700px;
     }
 
     thead th {
@@ -75,6 +75,7 @@
       border: 1px solid #ddd;
       text-align: center;
       line-height: 1.2;
+      word-wrap: break-word;
     }
 
     tbody tr:hover {
@@ -96,7 +97,6 @@
       background-color: #23527c;
     }
 
-    /* Distribución de columnas */
     th:nth-child(1), td:nth-child(1) { width: 30px; }
     th:nth-child(2), td:nth-child(2) { width: 130px; }
     th:nth-child(3), td:nth-child(3) { width: 100px; }
@@ -112,7 +112,7 @@
     @media (max-width: 800px) {
       table {
         font-size: 11px;
-        min-width: 600px;  /* Menor ancho mínimo en pantallas chicas */
+        min-width: 600px;
       }
     }
 
@@ -122,70 +122,67 @@
         min-width: 500px;
       }
     }
-
   </style>
 
   <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-database-compat.js"></script>
 </head>
 <body>
+  <div class="container">
+    <h2>SRAD - Sistema de Registro y Almacenamiento de Datos</h2>
 
-<div class="container">
-  <h2>SRAD - Sistema de Registro y Almacenamiento de Datos</h2>
+    <div class="filters">
+      <label>
+        Escuela:
+        <select id="filterEscuela" onchange="applyFilters()">
+          <option value="">Todas</option>
+        </select>
+      </label>
+      <label>
+        Curso:
+        <select id="filterCurso" onchange="applyFilters()">
+          <option value="">Todos</option>
+        </select>
+      </label>
+    </div>
 
-  <div class="filters">
-    <label>
-      Escuela:
-      <select id="filterEscuela" onchange="applyFilters()">
-        <option value="">Todas</option>
-      </select>
-    </label>
-    <label>
-      Curso:
-      <select id="filterCurso" onchange="applyFilters()">
-        <option value="">Todos</option>
-      </select>
-    </label>
+    <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+      <button onclick="window.location.href='../index.html'" style="
+        padding: 8px 15px;
+        font-size: 13px;
+        border-radius: 5px;
+        background-color: #2980b9;
+        color: white;
+        border: none;
+        cursor: pointer;
+      ">
+        ⬅️ Volver al Inicio
+      </button>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Nombre<br>Apellido</th>
+            <th>Usuario</th>
+            <th>Escuela</th>
+            <th>Curso</th>
+            <th>P2<br>Curso</th>
+            <th>P3<br>Escuela</th>
+            <th>P4<br>C+E</th>
+            <th>P5<br>Gral</th>
+            <th>P6<br>Oculto</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
+        <tbody id="usersList">
+          <tr><td colspan="11">Cargando usuarios...</td></tr>
+        </tbody>
+      </table>
+    </div>
   </div>
-
-  <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
-    <button onclick="window.location.href='../index.html'" style="
-      padding: 8px 15px;
-      font-size: 13px;
-      border-radius: 5px;
-      background-color: #2980b9;
-      color: white;
-      border: none;
-      cursor: pointer;
-    ">
-      ⬅️ Volver al Inicio
-    </button>
-  </div>
-
-  <div class="table-wrapper">
-    <table>
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Nombre<br>Apellido</th>
-          <th>Usuario</th>
-          <th>Escuela</th>
-          <th>Curso</th>
-          <th>P2<br>Curso</th>
-          <th>P3<br>Escuela</th>
-          <th>P4<br>C+E</th>
-          <th>P5<br>Gral</th>
-          <th>P6<br>Oculto</th>
-          <th>Acción</th>
-        </tr>
-      </thead>
-      <tbody id="usersList">
-        <tr><td colspan="11">Cargando usuarios...</td></tr>
-      </tbody>
-    </table>
-  </div>
-</div>
-
 <script>
     const firebaseConfig = {
       apiKey: "AIzaSyBVZaysx9d6u6P13DYINPtcinpf79Sgx4U",
